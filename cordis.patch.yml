@@ -1,0 +1,5 @@
+# dsh-my bundle patch: registers the session management center
+# server half into the web profile.
+- insert:
+    - id: dsh-my
+      name: 'dsh-my'

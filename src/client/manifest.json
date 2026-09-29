@@ -1,0 +1,16 @@
+{
+  "note": "客户端产物的片段顺序；client.js 由 scripts/build-client.mjs 生成，勿手改产物。",
+  "fragments": [
+    "10-i18n.js",
+    "20-core.js",
+    "30-styles.js",
+    "40-app-palette-wallpaper.js",
+    "41-app-zen-detect.js",
+    "42-app-dialogs.js",
+    "43-app-composer.js",
+    "44-app-restart-welcome.js",
+    "45-app-sidebar.js",
+    "46-app-entry.js"
+  ],
+  "generated": "client.js"
+}

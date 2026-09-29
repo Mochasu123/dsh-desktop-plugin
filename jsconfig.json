@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2023",
+    "lib": ["es2023", "dom"],
+    "types": [],
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "lib/**/*.js",
+    "scripts/**/*.mjs",
+    "test/**/*.js",
+    "test/**/*.mjs",
+    "src/client/**/*.js"
+  ],
+  "exclude": [
+    "node_modules",
+    "client.js"
+  ]
+}

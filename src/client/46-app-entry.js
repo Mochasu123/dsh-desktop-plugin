@@ -7,6 +7,31 @@
 			ctxUiWorkspace = ctx.uiWorkspace ?? null;
 			ctxLayout = ctx.get?.("layout", false) ?? null;
 			ctxSlots = ctx.slots ?? null;
+			const hookLayout = (l) => {
+				if (!l || l.__wpHooked) return;
+				l.__wpHooked = true;
+				const origSelect = l.selectPanel?.bind(l);
+				l.selectPanel = (panelId) => {
+					if (panelId === "wallpaper") {
+						dialogBus.set({ wallpaper: true });
+						return;
+					}
+					return origSelect ? origSelect(panelId) : undefined;
+				};
+				if (typeof l.hasMainPanel === "function") {
+					const origHas = l.hasMainPanel.bind(l);
+					l.hasMainPanel = (id) => id === "wallpaper" || origHas(id);
+				}
+			};
+			hookLayout(ctxLayout);
+			try {
+				ctx.on?.("internal/service", (name) => {
+					if (name === "layout") {
+						ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
+						hookLayout(ctxLayout);
+					}
+				});
+			} catch { /* ignore */ }
 			try {
 				if (ctxSessions?.list?.subscribe) {
 					ctxSessions.list.subscribe(() => {
@@ -195,6 +220,18 @@
 				}, (props) => react.createElement(RestartButton, props)));
 			} catch (e) {
 				console.error("[dsh-session-center] footer action slot failed:", e);
+			}
+			// 侧栏全局面板行壁纸入口（位于插件市场旁边）
+			try {
+				ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+					name: "sidebar.panellist",
+					id: "wallpaper",
+					order: 10,
+					label: (t) => (typeof t === "function" ? t("wallpaper") : "壁纸"),
+					locale: NS,
+				}, (props) => react.createElement(WallpaperPanelIcon, props)));
+			} catch (e) {
+				console.error("[dsh-session-center] panellist wallpaper slot failed:", e);
 			}
 			// （此处原有一个「附件浮动栏」槽注册：它引用服务端早已删除的
 			//  /api-ext/session-center.paste.get，detectTextAttachment 也从未被调用，
@@ -418,7 +455,9 @@ button:active {
 						const toggle = sidebar.querySelector('[class*="toggle"]');
 						if (!toggle) return;
 
-						if (isCollapsed) {
+						const isWindowsDesktop = Boolean(document.querySelector("[data-windows-titlebar]"));
+
+						if (isCollapsed && isWindowsDesktop) {
 							const hasNativeRail = Boolean(toggle.querySelector('[class*="railMark"]:not(.sc-whale-mark)'));
 							if (!hasNativeRail) {
 								let mark = toggle.querySelector(".sc-whale-mark");
@@ -429,6 +468,9 @@ button:active {
 									mark.innerHTML = `<svg viewBox="0 0 23.16 17.04" width="24" height="18" fill="none"><path d="${FISH_PATH}" fill="currentColor"/></svg>`;
 									toggle.appendChild(mark);
 								}
+							} else {
+								const marks = toggle.querySelectorAll(".sc-whale-mark");
+								for (const m of marks) m.remove();
 							}
 						} else {
 							const marks = toggle.querySelectorAll(".sc-whale-mark");

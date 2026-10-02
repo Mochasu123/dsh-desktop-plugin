@@ -32,6 +32,63 @@
 			);
 		}
 
+		function SearchGlyph({ active }) {
+			return h("svg", {
+				width: 12,
+				height: 12,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.75",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-search",
+				"aria-hidden": "true",
+				style: { opacity: active ? 1 : 0.62, flexShrink: 0, transition: "opacity .15s ease, transform .15s ease" },
+			},
+				h("circle", { cx: "6.5", cy: "6.5", r: "4.5" }),
+				h("line", { x1: "10", y1: "10", x2: "14", y2: "14" }),
+			);
+		}
+
+		function TagGlyph() {
+			return h("svg", {
+				width: 14,
+				height: 14,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.4",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-tag",
+				"aria-hidden": "true",
+				style: { display: "inline-block", verticalAlign: "middle" },
+			},
+				h("path", { d: "M1.5 7.5V2.5A1 1 0 0 1 2.5 1.5H7.5L14.2 8.2A1.4 1.4 0 0 1 14.2 10.2L10.2 14.2A1.4 1.4 0 0 1 8.2 14.2L1.5 7.5Z" }),
+				h("circle", { cx: "5", cy: "5", r: "1.2", fill: "currentColor", stroke: "none" }),
+			);
+		}
+
+		function BatchGlyph({ active }) {
+			return h("svg", {
+				width: 14,
+				height: 14,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.4",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-batch",
+				"aria-hidden": "true",
+				style: { display: "inline-block", verticalAlign: "middle" },
+			},
+				h("rect", { x: "2", y: "2", width: "12", height: "12", rx: "3" }),
+				h("polyline", { points: "5 8.2 7.2 10.5 11 5.8", strokeWidth: "1.75" }),
+			);
+		}
+
 		function SessionCenterBrowser({ wide, expandSidebar, useSessions, useWorkspaces, useStore, usePanelInfo, t, renderSlot, open, panels: panelsProp, searchOpen: searchOpenProp }) {
 			const L = makeT(t);
 			const TF = makeTF(t);
@@ -760,33 +817,31 @@
 					})))
 					: null,
 				h("div", { className: "sc-header" },
-					h("span", { className: "sc-title" }, L("sessions")),
+					h("button", {
+						type: "button",
+						className: "sc-title sc-title-btn" + (searchOpen ? " sc-title-active" : ""),
+						title: L("searchSessions"),
+						"aria-label": L("searchSessions"),
+						"aria-expanded": searchOpen ? "true" : "false",
+						onClick: () => { if (searchOpen) closeSearch(); else setSearchOpen(true); },
+					},
+						h("span", { className: "sc-title-text" }, L("sessions")),
+						h(SearchGlyph, { active: searchOpen }),
+					),
 					// 每个按钮 = 图标 + `.sc-btn-label`。侧栏内容区窄于 250px 时由 CSS
 					// 容器查询只留图标，避免出现"两个功能挤在一个按钮里"的折行断字
 					// （2026-09-28 用户报）。
 					h("div", { className: "sc-header-actions" },
 						h("button", {
-							type: "button",
-							className: "sc-btn" + (searchOpen ? " sc-btn-on" : ""),
-							title: L("searchSessions"),
-							"aria-label": L("searchSessions"),
-							"aria-expanded": searchOpen ? "true" : "false",
-							onClick: () => { if (searchOpen) closeSearch(); else setSearchOpen(true); },
-						}, h("span", { "aria-hidden": "true" }, "🔍"), h("span", { className: "sc-btn-label" }, L("search"))),
-						h("button", {
-							type: "button", className: "sc-btn", title: L("wallpaper"), "aria-label": L("wallpaper"),
-							onClick: () => dialogBus.set({ wallpaper: true }),
-						}, h("span", { "aria-hidden": "true" }, "🖼"), h("span", { className: "sc-btn-label" }, L("wallpaper"))),
-						h("button", {
 							type: "button", className: "sc-btn", title: L("manageTags"), "aria-label": L("manageTags"),
 							onClick: () => dialogBus.set({ tags: true }),
-						}, h("span", { "aria-hidden": "true" }, "🏷"), h("span", { className: "sc-btn-label" }, L("manageTags"))),
+						}, h("span", { className: "sc-btn-icon", "aria-hidden": "true" }, h(TagGlyph)), h("span", { className: "sc-btn-label" }, L("manageTags"))),
 						h("button", {
-							type: "button", className: "sc-btn",
-							title: selecting ? L("batchDone") : L("batch"),
+							type: "button", className: "sc-btn" + (selecting ? " sc-btn-on" : ""),
+							title: L("batch"),
 							"aria-label": selecting ? L("batchDone") : L("batch"),
 							onClick: () => { setSelecting(!selecting); setSelected(new Set()); },
-						}, h("span", { "aria-hidden": "true" }, "☑"), h("span", { className: "sc-btn-label" }, selecting ? L("batchDone") : L("batch"))),
+						}, h("span", { className: "sc-btn-icon", "aria-hidden": "true" }, h(BatchGlyph, { active: selecting })), h("span", { className: "sc-btn-label" }, selecting ? L("batchDone") : L("batch"))),
 					),
 				),
 				// 搜索输入行（0.1.7 接回：官方搜索框随官方侧栏被 shadow 掉了）
@@ -840,7 +895,7 @@
 				selecting
 					? h("div", { className: "sc-batchbar" },
 						h("span", { style: { fontSize: 12, opacity: 0.7 } }, `${selected.size} / ${sessions.length}`),
-						h("button", { type: "button", className: "sc-btn", onClick: () => { const n = new Set(sessions.map((s) => s.sessionId)); setSelected(n); } }, L("selectAll")),
+						h("button", { type: "button", className: "sc-btn", title: L("selectAll"), onClick: () => { const n = new Set(sessions.map((s) => s.sessionId)); setSelected(n); } }, L("selectAll")),
 						h("button", {
 							type: "button", className: "sc-btn",
 							disabled: selected.size === 0,

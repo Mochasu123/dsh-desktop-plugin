@@ -46,4 +46,31 @@
 			}, h("span", { className: "ic", "aria-hidden": "true" }, "⟳"), wide ? h("span", { className: "lb" }, tt("restart")) : null);
 		}
 
+		/**
+		 * 侧栏导航行壁纸入口图标（与插件市场并列）
+		 */
+		function WallpaperPanelIcon({ size = 16 }) {
+			return h("svg", {
+				width: size,
+				height: size,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.3",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				"aria-hidden": "true",
+				style: { cursor: "pointer", display: "inline-block", verticalAlign: "middle" },
+				onClick: (e) => {
+					e.stopPropagation();
+					dialogBus.set({ wallpaper: true });
+				},
+			},
+				h("rect", { x: "1.5", y: "2", width: "13", height: "12", rx: "2" }),
+				h("circle", { cx: "5.5", cy: "5.5", r: "1", fill: "currentColor", stroke: "none" }),
+				h("polyline", { points: "2.5 12 6.5 8 9.5 11 11.5 9 13.5 11" }),
+			);
+		}
+
 		// ------------------------------------------------------- main browser
+

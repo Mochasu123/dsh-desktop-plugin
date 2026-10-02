@@ -518,31 +518,88 @@
 			}
 		}
 
-		// 确保开屏一打开 dsh，侧边栏直接处于收起状态（呈现用户截图所示的通透壁纸）
+		// 确保开屏一打开 dsh，侧边栏直接处于收起状态（呈现通透壁纸）
+		// 优化：仅在开屏初始阶段执行单次静默收起。
+		// 一旦侧边栏已处于收起态、或用户有主动点击/交互意图、或超过极短检查窗口，立即彻底注销退出，
+		// 严禁持续长达 4 秒监听并反复收起，避免强行拦截并扼杀用户主动展开侧边栏（会话列表）的操作。
 		function ensureBootLayout() {
 			if (typeof document === "undefined" || typeof document.querySelector !== "function") return;
 
-			let attempts = 0;
-			const checkAndCollapse = () => {
-				attempts++;
-				if (isSidebarExpanded()) {
-					collapseSidebarIfOpen(false);
+			let done = false;
+			let hasTriggeredCollapse = false;
+			let observer = null;
+			let safetyTimer = null;
+
+			const cleanup = () => {
+				if (done) return;
+				done = true;
+				if (observer) {
+					try { observer.disconnect(); } catch (e) {}
+					observer = null;
 				}
-				if (isSidebarExpanded() && attempts < 40) {
-					setTimeout(checkAndCollapse, 60);
+				if (safetyTimer) {
+					clearTimeout(safetyTimer);
+					safetyTimer = null;
+				}
+				if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
+					window.removeEventListener("pointerdown", onUserInteract, true);
+					window.removeEventListener("click", onUserInteract, true);
+					window.removeEventListener("keydown", onUserInteract, true);
 				}
 			};
 
-			checkAndCollapse();
+			// 用户有任何主动交互（点击、按键等），100% 遵从用户意图，立即永久退出开屏收起
+			const onUserInteract = () => {
+				cleanup();
+			};
 
-			if (typeof MutationObserver !== "undefined" && document.body) {
-				const observer = new MutationObserver(() => {
-					if (isSidebarExpanded()) {
-						checkAndCollapse();
-					}
-				});
-				observer.observe(document.body, { childList: true, subtree: true });
-				setTimeout(() => observer.disconnect(), 4000);
+			if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+				window.addEventListener("pointerdown", onUserInteract, { capture: true, passive: true });
+				window.addEventListener("click", onUserInteract, { capture: true, passive: true });
+				window.addEventListener("keydown", onUserInteract, { capture: true, passive: true });
+			}
+
+			const tryInitialCollapse = () => {
+				if (done) return;
+				const sidebar = document.querySelector('[data-slot="sidebar"]');
+				if (!sidebar) return; // 侧栏元素尚未挂载，等待挂载
+
+				if (!isSidebarExpanded()) {
+					// 侧栏已是收起状态，开屏布局已达标，立即结束退出
+					cleanup();
+					return;
+				}
+
+				// 侧栏处于展开态且尚未尝试过收起：仅触发一次静默收起
+				if (!hasTriggeredCollapse) {
+					hasTriggeredCollapse = true;
+					collapseSidebarIfOpen(false);
+					// 短延时后再次确认：若已收起则立即清理，若仍在收起动画中则交由 observer 捕获收起态后立即退出
+					setTimeout(() => {
+						if (!isSidebarExpanded()) {
+							cleanup();
+						}
+					}, 50);
+				}
+			};
+
+			// 1. 立即检查一次
+			tryInitialCollapse();
+
+			// 2. 若侧边栏尚未挂载完成，挂载短时 MutationObserver（一旦检测到收起立即断开，最多兜底 800ms）
+			if (!done && typeof MutationObserver !== "undefined" && document.body) {
+				try {
+					observer = new MutationObserver(() => {
+						if (done) return;
+						tryInitialCollapse();
+					});
+					observer.observe(document.body, { childList: true, subtree: true });
+				} catch (e) {}
+			}
+
+			// 最多 800ms 兜底超时后强制退出并移除所有监听，绝不长时间占用
+			if (!done) {
+				safetyTimer = setTimeout(cleanup, 800);
 			}
 		}
 

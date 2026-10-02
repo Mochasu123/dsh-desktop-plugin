@@ -478,28 +478,24 @@ window.__ModuleLoader__.load({
 }
 .sc-root{display:flex;flex-direction:column;height:100%;min-height:0;padding:0 8px 8px;}
 .sc-header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:6px 6px 4px;}
-.sc-title{font-size:12px;font-weight:600;letter-spacing:.04em;opacity:.72;}
 .sc-header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 6px 4px;}
 .sc-title{font-size:12px;font-weight:600;letter-spacing:.04em;opacity:.72;flex:none;}
+button.sc-title,
+.sc-title-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:inherit;font:inherit;font-size:12px;font-weight:600;letter-spacing:.04em;opacity:.78;padding:3px 6px;margin:-3px -6px;border-radius:7px;cursor:pointer;transition:background .15s ease,opacity .15s ease,color .15s ease;user-select:none;}
+button.sc-title:hover{opacity:1;background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.14));}
+button.sc-title.sc-title-active{opacity:1;color:var(--dsw-alias-accent, #4dabf7);background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.16));}
+.sc-title-text{min-width:0;line-height:1;}
+.sc-glyph-search{display:inline-block;vertical-align:middle;}
 /* 头部动作行：**永不换行**。侧栏内容区只有 240px（256 - 2×8 padding），
-   4 个带字按钮放不下，一换行就变成"会/话 搜/索 图/壁/纸"那种竖排断字
+   按钮放不下，一换行就变成竖排断字
    （2026-09-28 用户报"两个功能挤在一个按钮里"）。这里做两件事：
      1) nowrap + 不收缩，保证按钮不会互相挤压/叠字；
-     2) 侧栏内容区（component query 容器是 .sc-root，container-type:inline-size）
-        窄于 250px 时自动收成纯图标（@container 见下方）。 */
+     2) 侧栏内容区窄于 250px 时自动收成纯图标。 */
 .sc-header-actions{display:flex;flex-wrap:nowrap;gap:4px;flex:0 0 auto;justify-content:flex-end;}
 .sc-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:0 0 auto;white-space:nowrap;border:none;background:none;color:inherit;font:inherit;font-size:12px;padding:3px 8px;border-radius:6px;cursor:pointer;opacity:.75;}
 .sc-btn:hover{background:var(--dsw-alias-interactive-bg-hover, rgba(128,128,128,.14));opacity:1;}
 .sc-btn.danger{color:var(--dsw-alias-danger, #e5484d);}
-/* 侧栏内容盒只有 240px（256 − 左右各 8px padding）。实测量级：
-   4 个带字按钮在中文下约 4×56px，加上标题与间距 ≈ 270px > 240px —— **必然折行**，
-   这正是用户截图里「会话 搜索 图壁 纸 标签 管理 多 选」被拆成竖排断字的原因
-   （"两个功能挤在一个按钮里"）。
-   结论：正常宽度下也把标签收成纯图标（图标是独立 span，整块可隐藏），
-   点击目标 ~30px×26px，四个按钮合计约 163px，留足余量。
-   可发现性由每个按钮自带的原生 title + aria-label 兜底。
-   这条不放进容器查询：.sc-root 的容器内容盒恒为 240px，
-   任何 <=240 的阈值都不会触发，写了等于没写。 */
+.sc-btn-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0;}
 .sc-header .sc-btn-label{display:none;}
 .sc-header .sc-btn{padding:3px 7px;}
 @container (max-width: 200px){
@@ -528,6 +524,10 @@ window.__ModuleLoader__.load({
 .sc-panels.sc-rail{padding:2px 4px 8px;gap:4px;align-items:center;}
 .sc-panels.sc-rail .sc-panel-btn{width:36px;height:36px;padding:0;justify-content:center;gap:0;}
 .sc-panels.sc-rail .sc-panel-label{display:none;}
+/* ===== 官方侧栏导航行（插件市场与壁纸入口并列居中，横向排开） ===== */
+[data-slot="sidebar"] [class*="panelList"]{display:flex !important;flex-direction:row !important;align-items:center !important;gap:6px !important;margin:0 2px 8px !important;}
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]{flex:1 1 0 !important;min-width:0 !important;width:auto !important;margin:0 !important;padding:7px 10px !important;justify-content:flex-start !important;}
+[data-slot="sidebar"] [class*="panelList"] ~ [class*="regionArea"] .sc-panels{display:none !important;}
 /* ===== 会话搜索（0.1.7 接回：官方搜索框随官方侧栏被 shadow 掉） ===== */
 .sc-search-row{position:relative;z-index:1;display:flex;align-items:center;gap:4px;padding:2px 6px 6px;}
 .sc-search-input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2, rgba(128,128,128,.4));background:color-mix(in srgb, var(--dsw-alias-bg-base) 62%, transparent);color:inherit;font:inherit;font-size:12px;padding:6px 9px;border-radius:9px;outline:none;transition:border-color .15s ease,background .15s ease;}
@@ -561,7 +561,14 @@ html.sc-wall-on body[data-ds-dark-theme] .sc-row.current{background:linear-gradi
 .sc-status{width:10px;height:10px;flex-shrink:0;}
 .sc-spinner{border:2px solid rgba(77,171,247,.28);border-top-color:var(--dsw-alias-accent,#4dabf7);border-radius:50%;animation:sc-spin .8s linear infinite;}
 @keyframes sc-spin{to{transform:rotate(360deg);}}
-.sc-check{flex-shrink:0;width:14px;height:14px;accent-color:var(--dsw-alias-accent,#4dabf7);}
+.sc-check{-webkit-appearance:none;appearance:none;margin:0;width:16px;height:16px;flex-shrink:0;border-radius:5px;border:1.5px solid var(--dsw-alias-border-l2, rgba(120,130,150,.45));background:color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 45%, transparent);box-shadow:inset 0 1px 1px rgba(0,0,0,.04);cursor:pointer;display:inline-grid;place-content:center;position:relative;transition:border-color .15s ease,background .15s ease,box-shadow .15s ease,transform .12s ease;box-sizing:border-box;}
+.sc-row:hover .sc-check{border-color:var(--dsw-alias-border-l1, rgba(120,130,150,.7));}
+.sc-check:hover{border-color:var(--dsw-alias-accent, #4dabf7);background:color-mix(in srgb, var(--dsw-alias-accent, #4dabf7) 15%, transparent);transform:scale(1.05);}
+.sc-check:checked{border-color:var(--dsw-alias-accent, #4dabf7);background:var(--dsw-alias-accent, #4dabf7);box-shadow:0 1px 4px rgba(77,171,247,.45);}
+.sc-check:checked::after{content:"";display:block;width:4px;height:8px;border:solid #ffffff;border-width:0 1.8px 1.8px 0;transform:rotate(45deg) translate(-0.5px,-0.5px);}
+body[data-ds-dark-theme] .sc-check{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.08);}
+body[data-ds-dark-theme] .sc-row:hover .sc-check{border-color:rgba(255,255,255,.55);}
+body[data-ds-dark-theme] .sc-check:checked{border-color:var(--dsw-alias-accent, #4dabf7);background:var(--dsw-alias-accent, #4dabf7);}
 .sc-menu{position:fixed;z-index:60;min-width:min(160px,70vw);background:color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 80%, transparent);-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);border:1px solid color-mix(in srgb, var(--dsw-alias-border-l2, rgba(120,130,150,.35)) 55%, transparent);border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 32px rgba(15,20,30,.28);padding:5px;display:flex;flex-direction:column;color:var(--dsw-alias-label-primary,#23272e);max-height:min(420px,70vh);overflow-y:auto;}
 .sc-menu-item{display:flex;align-items:center;gap:8px;width:100%;border:none;background:none;color:inherit;font:inherit;font-size:13px;text-align:left;padding:7px 10px;border-radius:9px;cursor:pointer;}
 .sc-menu-item:hover{background:var(--dsw-alias-interactive-bg-hover, rgba(120,140,180,.14));}
@@ -1218,8 +1225,11 @@ html.sc-wall-on body[data-ds-dark-theme] [data-slot="sidebar"] > div:first-child
 }
 
 /* 收起状态：直接向左上角聚拢收拢为 44px 悬浮小鲸鱼灵动球（位置固定；拖拽交互 2026-09-26 已移除，见 40 号片段回归记录） */
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] > div:first-child,
 html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) > div:first-child,
 html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]),
+html.sc-wall-on [data-slot="sidebar"] > [class*="collapsed"],
 html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"]{
   width: 44px !important;
   min-width: 44px !important;
@@ -1430,8 +1440,11 @@ html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [class*="sidebarCol"]{
 }
 html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] > div:first-child,
 html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) > div:first-child,
-html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] > div:first-child,
-html.sc-wall-on [data-slot="sidebar"] > [class*="collapsed"]{
+html.sc-wall-on [data-slot="sidebar"] > [class*="collapsed"],
+html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"]{
+  position: fixed !important;
+  top: 48px !important;
+  left: 14px !important;
   width: 44px !important;
   height: 44px !important;
   min-width: 44px !important;
@@ -1450,6 +1463,7 @@ html.sc-wall-on [data-slot="sidebar"] > [class*="collapsed"]{
   will-change: transform, box-shadow;
   transition: border-radius var(--sc-sb-collapse-dur) var(--sc-sb-collapse-ease) !important;
 }
+html.sc-wall-on body[data-ds-dark-theme] [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] > div:first-child,
 html.sc-wall-on body[data-ds-dark-theme] [data-slot="sidebar"]:has([class*="collapsed"]) > div:first-child,
 html.sc-wall-on body[data-ds-dark-theme] [data-slot="sidebar"] [class*="collapsed"]{
   background: color-mix(in srgb, #161922 85%, transparent) !important;
@@ -1511,6 +1525,19 @@ html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="panelIc
 html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="panelIcon"]{
   display: none !important;
 }
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="brand"],
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="panelList"],
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="regionArea"],
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="footArea"],
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="newSession"],
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"] [class*="buildRevision"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="brand"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="panelList"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="regionArea"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="footArea"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="newSession"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]) [class*="buildRevision"],
+html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="brand"],
 html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="panelList"],
 html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="regionArea"],
 html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="footArea"],
@@ -1580,6 +1607,9 @@ html.sc-wall-on body[data-ds-dark-theme] .sc-whale-mark{
   line-height: 0 !important;
   transform: none !important;
 }
+[class*="toggle"]:has([class*="railMark"]) .sc-whale-mark{
+  display: none !important;
+}
 .sc-whale-mark svg{
   display: block !important;
   flex: none !important;
@@ -1596,6 +1626,13 @@ html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="toggle"] svg
   max-width: 100% !important;
   max-height: 100% !important;
   animation: none !important;   /* 位移动画交还给整卡，避免图标被裁 */
+  transform: none !important;
+}
+
+/* 禁用官方折叠轨入场水平滑移动画，防止收起瞬间图标产生 49px 横向跳动 */
+html.sc-wall-on [class*="railIn"] [class*="iconButton"],
+html.sc-wall-on [class*="railIn"] [class*="toggle"]{
+  animation: none !important;
   transform: none !important;
 }
 
@@ -2965,31 +3002,88 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			}
 		}
 
-		// 确保开屏一打开 dsh，侧边栏直接处于收起状态（呈现用户截图所示的通透壁纸）
+		// 确保开屏一打开 dsh，侧边栏直接处于收起状态（呈现通透壁纸）
+		// 优化：仅在开屏初始阶段执行单次静默收起。
+		// 一旦侧边栏已处于收起态、或用户有主动点击/交互意图、或超过极短检查窗口，立即彻底注销退出，
+		// 严禁持续长达 4 秒监听并反复收起，避免强行拦截并扼杀用户主动展开侧边栏（会话列表）的操作。
 		function ensureBootLayout() {
 			if (typeof document === "undefined" || typeof document.querySelector !== "function") return;
 
-			let attempts = 0;
-			const checkAndCollapse = () => {
-				attempts++;
-				if (isSidebarExpanded()) {
-					collapseSidebarIfOpen(false);
+			let done = false;
+			let hasTriggeredCollapse = false;
+			let observer = null;
+			let safetyTimer = null;
+
+			const cleanup = () => {
+				if (done) return;
+				done = true;
+				if (observer) {
+					try { observer.disconnect(); } catch (e) {}
+					observer = null;
 				}
-				if (isSidebarExpanded() && attempts < 40) {
-					setTimeout(checkAndCollapse, 60);
+				if (safetyTimer) {
+					clearTimeout(safetyTimer);
+					safetyTimer = null;
+				}
+				if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
+					window.removeEventListener("pointerdown", onUserInteract, true);
+					window.removeEventListener("click", onUserInteract, true);
+					window.removeEventListener("keydown", onUserInteract, true);
 				}
 			};
 
-			checkAndCollapse();
+			// 用户有任何主动交互（点击、按键等），100% 遵从用户意图，立即永久退出开屏收起
+			const onUserInteract = () => {
+				cleanup();
+			};
 
-			if (typeof MutationObserver !== "undefined" && document.body) {
-				const observer = new MutationObserver(() => {
-					if (isSidebarExpanded()) {
-						checkAndCollapse();
-					}
-				});
-				observer.observe(document.body, { childList: true, subtree: true });
-				setTimeout(() => observer.disconnect(), 4000);
+			if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+				window.addEventListener("pointerdown", onUserInteract, { capture: true, passive: true });
+				window.addEventListener("click", onUserInteract, { capture: true, passive: true });
+				window.addEventListener("keydown", onUserInteract, { capture: true, passive: true });
+			}
+
+			const tryInitialCollapse = () => {
+				if (done) return;
+				const sidebar = document.querySelector('[data-slot="sidebar"]');
+				if (!sidebar) return; // 侧栏元素尚未挂载，等待挂载
+
+				if (!isSidebarExpanded()) {
+					// 侧栏已是收起状态，开屏布局已达标，立即结束退出
+					cleanup();
+					return;
+				}
+
+				// 侧栏处于展开态且尚未尝试过收起：仅触发一次静默收起
+				if (!hasTriggeredCollapse) {
+					hasTriggeredCollapse = true;
+					collapseSidebarIfOpen(false);
+					// 短延时后再次确认：若已收起则立即清理，若仍在收起动画中则交由 observer 捕获收起态后立即退出
+					setTimeout(() => {
+						if (!isSidebarExpanded()) {
+							cleanup();
+						}
+					}, 50);
+				}
+			};
+
+			// 1. 立即检查一次
+			tryInitialCollapse();
+
+			// 2. 若侧边栏尚未挂载完成，挂载短时 MutationObserver（一旦检测到收起立即断开，最多兜底 800ms）
+			if (!done && typeof MutationObserver !== "undefined" && document.body) {
+				try {
+					observer = new MutationObserver(() => {
+						if (done) return;
+						tryInitialCollapse();
+					});
+					observer.observe(document.body, { childList: true, subtree: true });
+				} catch (e) {}
+			}
+
+			// 最多 800ms 兜底超时后强制退出并移除所有监听，绝不长时间占用
+			if (!done) {
+				safetyTimer = setTimeout(cleanup, 800);
 			}
 		}
 
@@ -5756,7 +5850,34 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			}, h("span", { className: "ic", "aria-hidden": "true" }, "⟳"), wide ? h("span", { className: "lb" }, tt("restart")) : null);
 		}
 
+		/**
+		 * 侧栏导航行壁纸入口图标（与插件市场并列）
+		 */
+		function WallpaperPanelIcon({ size = 16 }) {
+			return h("svg", {
+				width: size,
+				height: size,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.3",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				"aria-hidden": "true",
+				style: { cursor: "pointer", display: "inline-block", verticalAlign: "middle" },
+				onClick: (e) => {
+					e.stopPropagation();
+					dialogBus.set({ wallpaper: true });
+				},
+			},
+				h("rect", { x: "1.5", y: "2", width: "13", height: "12", rx: "2" }),
+				h("circle", { cx: "5.5", cy: "5.5", r: "1", fill: "currentColor", stroke: "none" }),
+				h("polyline", { points: "2.5 12 6.5 8 9.5 11 11.5 9 13.5 11" }),
+			);
+		}
+
 		// ------------------------------------------------------- main browser
+
 
 		/**
 		 * 单个全局面板入口（0.1.7）。独立顶层组件，保证 hook 顺序稳定；
@@ -5789,6 +5910,63 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			},
 				h("span", { className: "sc-panel-glyph", "aria-hidden": "true" }, render ? render({ size: 16, active }) : null),
 				h("span", { className: "sc-panel-label" }, text),
+			);
+		}
+
+		function SearchGlyph({ active }) {
+			return h("svg", {
+				width: 12,
+				height: 12,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.75",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-search",
+				"aria-hidden": "true",
+				style: { opacity: active ? 1 : 0.62, flexShrink: 0, transition: "opacity .15s ease, transform .15s ease" },
+			},
+				h("circle", { cx: "6.5", cy: "6.5", r: "4.5" }),
+				h("line", { x1: "10", y1: "10", x2: "14", y2: "14" }),
+			);
+		}
+
+		function TagGlyph() {
+			return h("svg", {
+				width: 14,
+				height: 14,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.4",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-tag",
+				"aria-hidden": "true",
+				style: { display: "inline-block", verticalAlign: "middle" },
+			},
+				h("path", { d: "M1.5 7.5V2.5A1 1 0 0 1 2.5 1.5H7.5L14.2 8.2A1.4 1.4 0 0 1 14.2 10.2L10.2 14.2A1.4 1.4 0 0 1 8.2 14.2L1.5 7.5Z" }),
+				h("circle", { cx: "5", cy: "5", r: "1.2", fill: "currentColor", stroke: "none" }),
+			);
+		}
+
+		function BatchGlyph({ active }) {
+			return h("svg", {
+				width: 14,
+				height: 14,
+				viewBox: "0 0 16 16",
+				fill: "none",
+				stroke: "currentColor",
+				strokeWidth: "1.4",
+				strokeLinecap: "round",
+				strokeLinejoin: "round",
+				className: "sc-glyph-batch",
+				"aria-hidden": "true",
+				style: { display: "inline-block", verticalAlign: "middle" },
+			},
+				h("rect", { x: "2", y: "2", width: "12", height: "12", rx: "3" }),
+				h("polyline", { points: "5 8.2 7.2 10.5 11 5.8", strokeWidth: "1.75" }),
 			);
 		}
 
@@ -6520,33 +6698,31 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 					})))
 					: null,
 				h("div", { className: "sc-header" },
-					h("span", { className: "sc-title" }, L("sessions")),
+					h("button", {
+						type: "button",
+						className: "sc-title sc-title-btn" + (searchOpen ? " sc-title-active" : ""),
+						title: L("searchSessions"),
+						"aria-label": L("searchSessions"),
+						"aria-expanded": searchOpen ? "true" : "false",
+						onClick: () => { if (searchOpen) closeSearch(); else setSearchOpen(true); },
+					},
+						h("span", { className: "sc-title-text" }, L("sessions")),
+						h(SearchGlyph, { active: searchOpen }),
+					),
 					// 每个按钮 = 图标 + `.sc-btn-label`。侧栏内容区窄于 250px 时由 CSS
 					// 容器查询只留图标，避免出现"两个功能挤在一个按钮里"的折行断字
 					// （2026-09-28 用户报）。
 					h("div", { className: "sc-header-actions" },
 						h("button", {
-							type: "button",
-							className: "sc-btn" + (searchOpen ? " sc-btn-on" : ""),
-							title: L("searchSessions"),
-							"aria-label": L("searchSessions"),
-							"aria-expanded": searchOpen ? "true" : "false",
-							onClick: () => { if (searchOpen) closeSearch(); else setSearchOpen(true); },
-						}, h("span", { "aria-hidden": "true" }, "🔍"), h("span", { className: "sc-btn-label" }, L("search"))),
-						h("button", {
-							type: "button", className: "sc-btn", title: L("wallpaper"), "aria-label": L("wallpaper"),
-							onClick: () => dialogBus.set({ wallpaper: true }),
-						}, h("span", { "aria-hidden": "true" }, "🖼"), h("span", { className: "sc-btn-label" }, L("wallpaper"))),
-						h("button", {
 							type: "button", className: "sc-btn", title: L("manageTags"), "aria-label": L("manageTags"),
 							onClick: () => dialogBus.set({ tags: true }),
-						}, h("span", { "aria-hidden": "true" }, "🏷"), h("span", { className: "sc-btn-label" }, L("manageTags"))),
+						}, h("span", { className: "sc-btn-icon", "aria-hidden": "true" }, h(TagGlyph)), h("span", { className: "sc-btn-label" }, L("manageTags"))),
 						h("button", {
-							type: "button", className: "sc-btn",
-							title: selecting ? L("batchDone") : L("batch"),
+							type: "button", className: "sc-btn" + (selecting ? " sc-btn-on" : ""),
+							title: L("batch"),
 							"aria-label": selecting ? L("batchDone") : L("batch"),
 							onClick: () => { setSelecting(!selecting); setSelected(new Set()); },
-						}, h("span", { "aria-hidden": "true" }, "☑"), h("span", { className: "sc-btn-label" }, selecting ? L("batchDone") : L("batch"))),
+						}, h("span", { className: "sc-btn-icon", "aria-hidden": "true" }, h(BatchGlyph, { active: selecting })), h("span", { className: "sc-btn-label" }, selecting ? L("batchDone") : L("batch"))),
 					),
 				),
 				// 搜索输入行（0.1.7 接回：官方搜索框随官方侧栏被 shadow 掉了）
@@ -6600,7 +6776,7 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 				selecting
 					? h("div", { className: "sc-batchbar" },
 						h("span", { style: { fontSize: 12, opacity: 0.7 } }, `${selected.size} / ${sessions.length}`),
-						h("button", { type: "button", className: "sc-btn", onClick: () => { const n = new Set(sessions.map((s) => s.sessionId)); setSelected(n); } }, L("selectAll")),
+						h("button", { type: "button", className: "sc-btn", title: L("selectAll"), onClick: () => { const n = new Set(sessions.map((s) => s.sessionId)); setSelected(n); } }, L("selectAll")),
 						h("button", {
 							type: "button", className: "sc-btn",
 							disabled: selected.size === 0,
@@ -6693,6 +6869,31 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			ctxUiWorkspace = ctx.uiWorkspace ?? null;
 			ctxLayout = ctx.get?.("layout", false) ?? null;
 			ctxSlots = ctx.slots ?? null;
+			const hookLayout = (l) => {
+				if (!l || l.__wpHooked) return;
+				l.__wpHooked = true;
+				const origSelect = l.selectPanel?.bind(l);
+				l.selectPanel = (panelId) => {
+					if (panelId === "wallpaper") {
+						dialogBus.set({ wallpaper: true });
+						return;
+					}
+					return origSelect ? origSelect(panelId) : undefined;
+				};
+				if (typeof l.hasMainPanel === "function") {
+					const origHas = l.hasMainPanel.bind(l);
+					l.hasMainPanel = (id) => id === "wallpaper" || origHas(id);
+				}
+			};
+			hookLayout(ctxLayout);
+			try {
+				ctx.on?.("internal/service", (name) => {
+					if (name === "layout") {
+						ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
+						hookLayout(ctxLayout);
+					}
+				});
+			} catch { /* ignore */ }
 			try {
 				if (ctxSessions?.list?.subscribe) {
 					ctxSessions.list.subscribe(() => {
@@ -6881,6 +7082,18 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 				}, (props) => react.createElement(RestartButton, props)));
 			} catch (e) {
 				console.error("[dsh-session-center] footer action slot failed:", e);
+			}
+			// 侧栏全局面板行壁纸入口（位于插件市场旁边）
+			try {
+				ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+					name: "sidebar.panellist",
+					id: "wallpaper",
+					order: 10,
+					label: (t) => (typeof t === "function" ? t("wallpaper") : "壁纸"),
+					locale: NS,
+				}, (props) => react.createElement(WallpaperPanelIcon, props)));
+			} catch (e) {
+				console.error("[dsh-session-center] panellist wallpaper slot failed:", e);
 			}
 			// （此处原有一个「附件浮动栏」槽注册：它引用服务端早已删除的
 			//  /api-ext/session-center.paste.get，detectTextAttachment 也从未被调用，
@@ -7104,7 +7317,9 @@ button:active {
 						const toggle = sidebar.querySelector('[class*="toggle"]');
 						if (!toggle) return;
 
-						if (isCollapsed) {
+						const isWindowsDesktop = Boolean(document.querySelector("[data-windows-titlebar]"));
+
+						if (isCollapsed && isWindowsDesktop) {
 							const hasNativeRail = Boolean(toggle.querySelector('[class*="railMark"]:not(.sc-whale-mark)'));
 							if (!hasNativeRail) {
 								let mark = toggle.querySelector(".sc-whale-mark");
@@ -7115,6 +7330,9 @@ button:active {
 									mark.innerHTML = `<svg viewBox="0 0 23.16 17.04" width="24" height="18" fill="none"><path d="${FISH_PATH}" fill="currentColor"/></svg>`;
 									toggle.appendChild(mark);
 								}
+							} else {
+								const marks = toggle.querySelectorAll(".sc-whale-mark");
+								for (const m of marks) m.remove();
 							}
 						} else {
 							const marks = toggle.querySelectorAll(".sc-whale-mark");

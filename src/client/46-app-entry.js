@@ -5,7 +5,7 @@
 			// 按需取——项目既有约定是「不为用不到的服务留硬门禁」，而面板入口属于
 			// 增强项，缺失时只退化为不显示入口，不该让整插件不加载。
 			ctxUiWorkspace = ctx.uiWorkspace ?? null;
-			ctxLayout = ctx.get?.("layout", false) ?? null;
+			ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
 			ctxSlots = ctx.slots ?? null;
 			const hookLayout = (l) => {
 				if (!l || l.__wpHooked) return;
@@ -29,6 +29,9 @@
 					if (name === "layout") {
 						ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
 						hookLayout(ctxLayout);
+					}
+					if (name === "uiWorkspace") {
+						ctxUiWorkspace = ctx.get?.("uiWorkspace", false) ?? ctx.uiWorkspace ?? null;
 					}
 				});
 			} catch { /* ignore */ }
@@ -195,7 +198,10 @@
 					// 0.1.7：会话导航归 `ctx.uiWorkspace.openSession(id)`（旧
 					// `ctx.sessions.open` 已删除，调用即 TypeError）。语义一致：
 					// 内部 `replaceMain(id, …, "reveal")` = 保留并揭示该会话。
-					open: (sessionId) => ctx.uiWorkspace.openSession(sessionId),
+					open: (sessionId) => {
+						lastActiveSessionId = sessionId;
+						return ctx.uiWorkspace.openSession(sessionId);
+					},
 				}),
 				locale: NS,
 			}, (props) => react.createElement(SCBoundary, null, react.createElement(SessionCenterBrowser, props))));

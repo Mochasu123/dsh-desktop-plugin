@@ -1008,6 +1008,40 @@
 			}
 		};
 
+		const goBackToConversation = (e) => {
+			if (e) {
+				try { e.preventDefault(); } catch {}
+				try { e.stopPropagation(); } catch {}
+			}
+			// 1. 调用 ctxLayout?.selectPanel(null) 取消面板激活态
+			try {
+				ctxLayout?.selectPanel?.(null);
+			} catch {}
+			// 2. 模拟点击侧栏中处于激活态的面板按钮（触发官方或自定义的折叠/取消激活逻辑）
+			try {
+				const activeRows = document.querySelectorAll(
+					'[data-slot="sidebar"] [class*="panelRow"][aria-current], ' +
+					'[data-slot="sidebar"] [class*="panelRow"].active, ' +
+					'.sc-panel-btn.sc-panel-active'
+				);
+				activeRows.forEach((r) => { try { r.click(); } catch {} });
+			} catch {}
+			// 3. 恢复最近活跃会话或首个历史会话
+			try {
+				if (lastActiveSessionId) {
+					ctxUiWorkspace?.openSession?.(lastActiveSessionId);
+				} else {
+					const topRow = document.querySelector(".sc-row");
+					if (topRow) {
+						topRow.click();
+					} else {
+						const newBtn = document.querySelector('[data-slot="sidebar"] [class*="newSession"], .hHd-Xa_brand, [data-slot="sidebar"] button');
+						if (newBtn) newBtn.click();
+					}
+				}
+			} catch {}
+		};
+
 		// 页面级对话框宿主：挂在 shell.overlay 槽上，整页居中渲染
 		function ScDialogsHost() {
 			react.useSyncExternalStore(dialogBus.subscribe, dialogBus.getSnapshot, dialogBus.getSnapshot);
@@ -1032,13 +1066,14 @@
 			const tags = dialogBus.getTags?.() ?? [];
 			const refresh = dialogBus.onChanged;
 			react.useEffect(() => {
-				if (!activePanelId) return;
 				const onKey = (e) => {
 					if (e.key === "Escape") {
 						const hasDialog = Boolean(st.confirm || st.picker || st.repair || st.tags || st.wallpaper);
-						if (!hasDialog) {
+						const hasPanel = Boolean(activePanelId || document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))'));
+						if (!hasDialog && hasPanel) {
 							e.preventDefault();
-							try { ctxLayout?.selectPanel?.(null); } catch {}
+							e.stopPropagation();
+							goBackToConversation(e);
 						}
 					}
 				};
@@ -1046,37 +1081,48 @@
 				return () => window.removeEventListener("keydown", onKey, true);
 			}, [activePanelId, st]);
 			react.useEffect(() => {
-				if (!activePanelId) return;
 				const injectToolbar = () => {
-					const panel = document.querySelector('[data-plugin-panel]');
+					const panel = document.querySelector('[data-plugin-panel]') || document.querySelector('[data-slot="main"]:not(:has([data-slot*="conversation"]))');
 					if (!panel) return;
-					const toolbar = panel.querySelector('[class*="toolbar"]');
+					const toolbar = panel.querySelector('[class*="toolbar"], [class*="Actions"], header');
 					if (!toolbar || toolbar.querySelector(".sc-panel-tb-back")) return;
 					const btn = document.createElement("button");
 					btn.type = "button";
 					btn.className = "sc-panel-back-btn sc-panel-tb-back";
-					btn.title = (L("backToConversation") || "返回会话") + " (Esc)";
-					btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>' + (L("backToConversation") || "返回会话") + '</span><span class="sc-panel-back-key">Esc</span>';
-					btn.onclick = () => { try { ctxLayout?.selectPanel?.(null); } catch {} };
+					const backLabel = dialogBus.t?.("backToConversation") || "返回会话";
+					btn.title = backLabel + " (Esc)";
+					btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>' + backLabel + '</span><span class="sc-panel-back-key">Esc</span>';
+					btn.onclick = (e) => goBackToConversation(e);
+					btn.onpointerdown = (e) => { e.stopPropagation(); };
+					btn.onmousedown = (e) => { e.stopPropagation(); };
 					toolbar.prepend(btn);
 				};
-				injectToolbar();
-				const tId = setTimeout(injectToolbar, 80);
+				const checkAndInject = () => {
+					const isMainPanel = Boolean(activePanelId || document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))'));
+					if (isMainPanel) {
+						injectToolbar();
+					} else {
+						const existing = document.querySelector(".sc-panel-tb-back");
+						if (existing) existing.remove();
+					}
+				};
+				checkAndInject();
+				const tId = setInterval(checkAndInject, 250);
 				let observer = null;
 				try {
-					const host = document.querySelector('[data-plugin-panel]') || document.querySelector('[class*="centerCol"]');
+					const host = document.querySelector('[class*="centerCol"]') || document.body;
 					if (host) {
-						observer = new MutationObserver(injectToolbar);
+						observer = new MutationObserver(checkAndInject);
 						observer.observe(host, { childList: true, subtree: true });
 					}
 				} catch {}
 				return () => {
-					clearTimeout(tId);
+					clearInterval(tId);
 					if (observer) observer.disconnect();
 					const existing = document.querySelector(".sc-panel-tb-back");
 					if (existing) existing.remove();
 				};
-			}, [activePanelId, L]);
+			}, [activePanelId]);
 			react.useEffect(() => {
 				if (!st.toast) return;
 				const timer = setTimeout(() => dialogBus.set({ toast: null }), 2200);

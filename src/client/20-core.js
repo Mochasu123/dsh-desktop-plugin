@@ -12,6 +12,7 @@
 		//     行没反应、当前行不高亮」。
 		// 因此这里必须自己 inject `uiWorkspace`（不再经 `sidebar` 槽的 injectProps）。
 		const inject = ["slots", "sessions", "locale", "uiWorkspace"];
+		let lastActiveSessionId = null;
 
 		// ------------------------------------------------------------- api
 		//

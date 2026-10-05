@@ -85,6 +85,10 @@ button.sc-title.sc-title-active{opacity:1;color:var(--dsw-alias-accent, #4dabf7)
 [data-slot="sidebar"] [class*="panelList"]{display:flex !important;flex-direction:row !important;align-items:center !important;gap:6px !important;margin:0 2px 8px !important;}
 [data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]{flex:1 1 0 !important;min-width:0 !important;width:auto !important;margin:0 !important;padding:7px 10px !important;justify-content:flex-start !important;}
 [data-slot="sidebar"] [class*="panelList"] ~ [class*="regionArea"] .sc-panels{display:none !important;}
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]:has([aria-label*="自动化"]),
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"][aria-label*="自动化"],
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]:has([aria-label*="Schedule"]),
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"][aria-label*="Schedule"]{display:none !important;}
 /* ===== 会话搜索（0.1.7 接回：官方搜索框随官方侧栏被 shadow 掉） ===== */
 .sc-search-row{position:relative;z-index:1;display:flex;align-items:center;gap:4px;padding:2px 6px 6px;}
 .sc-search-input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2, rgba(128,128,128,.4));background:color-mix(in srgb, var(--dsw-alias-bg-base) 62%, transparent);color:inherit;font:inherit;font-size:12px;padding:6px 9px;border-radius:9px;outline:none;transition:border-color .15s ease,background .15s ease;}
@@ -556,6 +560,11 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]{
 html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, rgba(99,116,150,.1)) 75%, transparent) !important;
 }
+html.sc-wall-on [data-slot="main"] [class*="page"],
+html.sc-wall-on [data-slot="main"] [class*="listPane"],
+html.sc-wall-on [data-slot="main"] [class*="pageScroll"]{
+  background: transparent !important;
+}
 /* 全局主面板顶部工具栏返回按钮 */
 .sc-panel-back-btn{
   display: inline-flex;
@@ -575,6 +584,9 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   box-shadow: 0 2px 10px rgba(15,20,30,.08), inset 0 1px 0 rgba(255,255,255,.5);
   cursor: pointer;
   user-select: none;
+  pointer-events: auto !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
   transition: transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .sc-panel-back-btn:hover{
@@ -1216,6 +1228,16 @@ html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="toggle"]{
   border: none !important;
   cursor: pointer !important;
   overflow: hidden !important;
+}
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]),
+html.sc-wall-on [data-slot="sidebar"][class*="collapsed"]{
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+html.sc-wall-on [class*="sidebarCol"]{
+  background: transparent !important;
 }
 /* 折叠轨里的小鲸鱼：**只保留一个字形、并让它稳稳居中**。
    2026-09-28 用户两次报「左边小鲸鱼显示错误」（截图里小鲸鱼被 44px 卡片裁掉上半）。

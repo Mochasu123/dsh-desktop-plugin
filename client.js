@@ -271,6 +271,7 @@ window.__ModuleLoader__.load({
 		//     行没反应、当前行不高亮」。
 		// 因此这里必须自己 inject `uiWorkspace`（不再经 `sidebar` 槽的 injectProps）。
 		const inject = ["slots", "sessions", "locale", "uiWorkspace"];
+		let lastActiveSessionId = null;
 
 		// ------------------------------------------------------------- api
 		//
@@ -530,6 +531,10 @@ button.sc-title.sc-title-active{opacity:1;color:var(--dsw-alias-accent, #4dabf7)
 [data-slot="sidebar"] [class*="panelList"]{display:flex !important;flex-direction:row !important;align-items:center !important;gap:6px !important;margin:0 2px 8px !important;}
 [data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]{flex:1 1 0 !important;min-width:0 !important;width:auto !important;margin:0 !important;padding:7px 10px !important;justify-content:flex-start !important;}
 [data-slot="sidebar"] [class*="panelList"] ~ [class*="regionArea"] .sc-panels{display:none !important;}
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]:has([aria-label*="自动化"]),
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"][aria-label*="自动化"],
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"]:has([aria-label*="Schedule"]),
+[data-slot="sidebar"] [class*="panelList"] [class*="panelRow"][aria-label*="Schedule"]{display:none !important;}
 /* ===== 会话搜索（0.1.7 接回：官方搜索框随官方侧栏被 shadow 掉） ===== */
 .sc-search-row{position:relative;z-index:1;display:flex;align-items:center;gap:4px;padding:2px 6px 6px;}
 .sc-search-input{flex:1;min-width:0;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l2, rgba(128,128,128,.4));background:color-mix(in srgb, var(--dsw-alias-bg-base) 62%, transparent);color:inherit;font:inherit;font-size:12px;padding:6px 9px;border-radius:9px;outline:none;transition:border-color .15s ease,background .15s ease;}
@@ -1001,6 +1006,11 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]{
 html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, rgba(99,116,150,.1)) 75%, transparent) !important;
 }
+html.sc-wall-on [data-slot="main"] [class*="page"],
+html.sc-wall-on [data-slot="main"] [class*="listPane"],
+html.sc-wall-on [data-slot="main"] [class*="pageScroll"]{
+  background: transparent !important;
+}
 /* 全局主面板顶部工具栏返回按钮 */
 .sc-panel-back-btn{
   display: inline-flex;
@@ -1020,6 +1030,9 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   box-shadow: 0 2px 10px rgba(15,20,30,.08), inset 0 1px 0 rgba(255,255,255,.5);
   cursor: pointer;
   user-select: none;
+  pointer-events: auto !important;
+  -webkit-app-region: no-drag !important;
+  app-region: no-drag !important;
   transition: transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 .sc-panel-back-btn:hover{
@@ -1661,6 +1674,16 @@ html.sc-wall-on [data-slot="sidebar"] [class*="collapsed"] [class*="toggle"]{
   border: none !important;
   cursor: pointer !important;
   overflow: hidden !important;
+}
+html.sc-wall-on [class*="frame"][data-sidebar-collapsed] [data-slot="sidebar"],
+html.sc-wall-on [data-slot="sidebar"]:has([class*="collapsed"]),
+html.sc-wall-on [data-slot="sidebar"][class*="collapsed"]{
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+html.sc-wall-on [class*="sidebarCol"]{
+  background: transparent !important;
 }
 /* 折叠轨里的小鲸鱼：**只保留一个字形、并让它稳稳居中**。
    2026-09-28 用户两次报「左边小鲸鱼显示错误」（截图里小鲸鱼被 44px 卡片裁掉上半）。
@@ -5400,6 +5423,40 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			}
 		};
 
+		const goBackToConversation = (e) => {
+			if (e) {
+				try { e.preventDefault(); } catch {}
+				try { e.stopPropagation(); } catch {}
+			}
+			// 1. 调用 ctxLayout?.selectPanel(null) 取消面板激活态
+			try {
+				ctxLayout?.selectPanel?.(null);
+			} catch {}
+			// 2. 模拟点击侧栏中处于激活态的面板按钮（触发官方或自定义的折叠/取消激活逻辑）
+			try {
+				const activeRows = document.querySelectorAll(
+					'[data-slot="sidebar"] [class*="panelRow"][aria-current], ' +
+					'[data-slot="sidebar"] [class*="panelRow"].active, ' +
+					'.sc-panel-btn.sc-panel-active'
+				);
+				activeRows.forEach((r) => { try { r.click(); } catch {} });
+			} catch {}
+			// 3. 恢复最近活跃会话或首个历史会话
+			try {
+				if (lastActiveSessionId) {
+					ctxUiWorkspace?.openSession?.(lastActiveSessionId);
+				} else {
+					const topRow = document.querySelector(".sc-row");
+					if (topRow) {
+						topRow.click();
+					} else {
+						const newBtn = document.querySelector('[data-slot="sidebar"] [class*="newSession"], .hHd-Xa_brand, [data-slot="sidebar"] button');
+						if (newBtn) newBtn.click();
+					}
+				}
+			} catch {}
+		};
+
 		// 页面级对话框宿主：挂在 shell.overlay 槽上，整页居中渲染
 		function ScDialogsHost() {
 			react.useSyncExternalStore(dialogBus.subscribe, dialogBus.getSnapshot, dialogBus.getSnapshot);
@@ -5424,13 +5481,14 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			const tags = dialogBus.getTags?.() ?? [];
 			const refresh = dialogBus.onChanged;
 			react.useEffect(() => {
-				if (!activePanelId) return;
 				const onKey = (e) => {
 					if (e.key === "Escape") {
 						const hasDialog = Boolean(st.confirm || st.picker || st.repair || st.tags || st.wallpaper);
-						if (!hasDialog) {
+						const hasPanel = Boolean(activePanelId || document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))'));
+						if (!hasDialog && hasPanel) {
 							e.preventDefault();
-							try { ctxLayout?.selectPanel?.(null); } catch {}
+							e.stopPropagation();
+							goBackToConversation(e);
 						}
 					}
 				};
@@ -5438,37 +5496,48 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 				return () => window.removeEventListener("keydown", onKey, true);
 			}, [activePanelId, st]);
 			react.useEffect(() => {
-				if (!activePanelId) return;
 				const injectToolbar = () => {
-					const panel = document.querySelector('[data-plugin-panel]');
+					const panel = document.querySelector('[data-plugin-panel]') || document.querySelector('[data-slot="main"]:not(:has([data-slot*="conversation"]))');
 					if (!panel) return;
-					const toolbar = panel.querySelector('[class*="toolbar"]');
+					const toolbar = panel.querySelector('[class*="toolbar"], [class*="Actions"], header');
 					if (!toolbar || toolbar.querySelector(".sc-panel-tb-back")) return;
 					const btn = document.createElement("button");
 					btn.type = "button";
 					btn.className = "sc-panel-back-btn sc-panel-tb-back";
-					btn.title = (L("backToConversation") || "返回会话") + " (Esc)";
-					btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>' + (L("backToConversation") || "返回会话") + '</span><span class="sc-panel-back-key">Esc</span>';
-					btn.onclick = () => { try { ctxLayout?.selectPanel?.(null); } catch {} };
+					const backLabel = dialogBus.t?.("backToConversation") || "返回会话";
+					btn.title = backLabel + " (Esc)";
+					btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>' + backLabel + '</span><span class="sc-panel-back-key">Esc</span>';
+					btn.onclick = (e) => goBackToConversation(e);
+					btn.onpointerdown = (e) => { e.stopPropagation(); };
+					btn.onmousedown = (e) => { e.stopPropagation(); };
 					toolbar.prepend(btn);
 				};
-				injectToolbar();
-				const tId = setTimeout(injectToolbar, 80);
+				const checkAndInject = () => {
+					const isMainPanel = Boolean(activePanelId || document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))'));
+					if (isMainPanel) {
+						injectToolbar();
+					} else {
+						const existing = document.querySelector(".sc-panel-tb-back");
+						if (existing) existing.remove();
+					}
+				};
+				checkAndInject();
+				const tId = setInterval(checkAndInject, 250);
 				let observer = null;
 				try {
-					const host = document.querySelector('[data-plugin-panel]') || document.querySelector('[class*="centerCol"]');
+					const host = document.querySelector('[class*="centerCol"]') || document.body;
 					if (host) {
-						observer = new MutationObserver(injectToolbar);
+						observer = new MutationObserver(checkAndInject);
 						observer.observe(host, { childList: true, subtree: true });
 					}
 				} catch {}
 				return () => {
-					clearTimeout(tId);
+					clearInterval(tId);
 					if (observer) observer.disconnect();
 					const existing = document.querySelector(".sc-panel-tb-back");
 					if (existing) existing.remove();
 				};
-			}, [activePanelId, L]);
+			}, [activePanelId]);
 			react.useEffect(() => {
 				if (!st.toast) return;
 				const timer = setTimeout(() => dialogBus.set({ toast: null }), 2200);
@@ -6474,6 +6543,7 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			}, [localSearchHits, searchHits]);
 
 			const openSession = (sessionId) => {
+				lastActiveSessionId = sessionId;
 				try {
 					open?.(sessionId);
 				} catch {
@@ -7031,7 +7101,7 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			// 按需取——项目既有约定是「不为用不到的服务留硬门禁」，而面板入口属于
 			// 增强项，缺失时只退化为不显示入口，不该让整插件不加载。
 			ctxUiWorkspace = ctx.uiWorkspace ?? null;
-			ctxLayout = ctx.get?.("layout", false) ?? null;
+			ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
 			ctxSlots = ctx.slots ?? null;
 			const hookLayout = (l) => {
 				if (!l || l.__wpHooked) return;
@@ -7055,6 +7125,9 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 					if (name === "layout") {
 						ctxLayout = ctx.get?.("layout", false) ?? ctx.layout ?? null;
 						hookLayout(ctxLayout);
+					}
+					if (name === "uiWorkspace") {
+						ctxUiWorkspace = ctx.get?.("uiWorkspace", false) ?? ctx.uiWorkspace ?? null;
 					}
 				});
 			} catch { /* ignore */ }
@@ -7221,7 +7294,10 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 					// 0.1.7：会话导航归 `ctx.uiWorkspace.openSession(id)`（旧
 					// `ctx.sessions.open` 已删除，调用即 TypeError）。语义一致：
 					// 内部 `replaceMain(id, …, "reveal")` = 保留并揭示该会话。
-					open: (sessionId) => ctx.uiWorkspace.openSession(sessionId),
+					open: (sessionId) => {
+						lastActiveSessionId = sessionId;
+						return ctx.uiWorkspace.openSession(sessionId);
+					},
 				}),
 				locale: NS,
 			}, (props) => react.createElement(SCBoundary, null, react.createElement(SessionCenterBrowser, props))));

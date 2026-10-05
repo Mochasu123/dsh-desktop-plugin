@@ -435,6 +435,7 @@
 			}, [localSearchHits, searchHits]);
 
 			const openSession = (sessionId) => {
+				lastActiveSessionId = sessionId;
 				try {
 					open?.(sessionId);
 				} catch {

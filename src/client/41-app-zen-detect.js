@@ -61,6 +61,10 @@
 					}
 				}
 			} catch (e) {}
+			// 处于非会话全局面板（如插件市场）时，视为活动界面，不进入 Zen 闲置态
+			if (document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))')) {
+				return true;
+			}
 			// 仅检测真正的模态弹窗或可见遮罩层，杜绝 Radix Tooltip、popper 占位、ContextMeter token 弹窗或隐藏容器误判
 			const overlays = document.querySelectorAll(
 				'.sc-overlay, .sc-dialog, .sc-dialog-mask, ' +
@@ -85,6 +89,10 @@
 					}
 				}
 			} catch (e) {}
+			// 处于非会话全局面板（如插件市场）时，保护侧栏不自动收起
+			if (document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))')) {
+				return true;
+			}
 			const sidebar = document.querySelector('[data-slot="sidebar"]');
 			if (!sidebar) return false;
 			// 1. 侧栏内部有正在操作的弹出菜单或对话框

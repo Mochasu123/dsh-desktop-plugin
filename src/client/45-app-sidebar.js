@@ -19,13 +19,20 @@
 				? (() => { try { return label(); } catch { return undefined; } })()
 				: label;
 			const text = typeof resolved === "string" && resolved.length > 0 ? resolved : L("pluginsPanel");
+			const tooltip = active ? `${L("backToConversation")} (${text})` : text;
 			return h("button", {
 				type: "button",
 				className: "sc-panel-btn" + (active ? " sc-panel-active" : ""),
-				title: text,
-				"aria-label": text,
+				title: tooltip,
+				"aria-label": tooltip,
 				"aria-current": active ? "page" : undefined,
-				onClick: () => { try { select(id); } catch (e) { console.debug("[dsh-session-center] selectPanel failed:", e); } },
+				onClick: () => {
+					try {
+						select(active ? null : id);
+					} catch (e) {
+						console.debug("[dsh-session-center] selectPanel failed:", e);
+					}
+				},
 			},
 				h("span", { className: "sc-panel-glyph", "aria-hidden": "true" }, render ? render({ size: 16, active }) : null),
 				h("span", { className: "sc-panel-label" }, text),

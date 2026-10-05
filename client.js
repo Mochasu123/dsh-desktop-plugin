@@ -141,6 +141,7 @@ window.__ModuleLoader__.load({
 			wallpaperDesc: "开启沉浸式毛玻璃背景：自定义图片、遮罩、模糊、缩放与毛玻璃强度。",
 			open: "打开",
 			sessionLog: "Session log",
+			backToConversation: "返回会话",
 		};
 		const en = {
 			sessions: "Sessions",
@@ -253,6 +254,7 @@ window.__ModuleLoader__.load({
 			wallpaperDesc: "Enable immersive frosted-glass background: custom image, mask, blur, zoom and glass strength.",
 			open: "Open",
 			sessionLog: "Session log",
+			backToConversation: "Back to Chat",
 		};
 
 		// 0.1.7（2026-09-28 升级）：客户端**会话选择**从 `ctx.sessions` 搬到
@@ -959,14 +961,117 @@ html.sc-wall-on [data-slot="main"]:not(:has([data-slot*="conversation"])){
 html.sc-wall-on [data-slot="main"]:not(:has([data-slot*="conversation"]))::before{
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 12px clamp(14px, 3vw, 36px) 16px;
+  max-width: 1040px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
   z-index: 0;
   pointer-events: none;
-  border-radius: var(--sc-radius-lg, 16px);
+  border-radius: var(--sc-radius-lg, 24px);
   background: color-mix(in srgb, #fafbfd var(--sc-content-glass, 88%), transparent);
+  -webkit-backdrop-filter: blur(var(--sc-card-blur, 28px)) saturate(180%) contrast(102%);
+  backdrop-filter: blur(var(--sc-card-blur, 28px)) saturate(180%) contrast(102%);
+  border: 1px solid color-mix(in srgb, rgba(255,255,255,.8) 70%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, rgba(255,255,255,.5) 50%, transparent), 0 20px 60px rgba(15,20,30,.18), inset 0 1px 0 rgba(255,255,255,.6);
 }
 html.sc-wall-on body[data-ds-dark-theme] [data-slot="main"]:not(:has([data-slot*="conversation"]))::before{
   background: color-mix(in srgb, #161820 var(--sc-content-glass, 88%), transparent);
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1);
+}
+/* 插件管理面板（data-plugin-panel）卡片美化与深度融入壁纸 */
+html.sc-wall-on [data-plugin-panel]{
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+html.sc-wall-on [data-plugin-panel] [data-plugin-group]{
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 65%, transparent) !important;
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l1, rgba(120,130,150,.2)) 50%, transparent) !important;
+  border-radius: 18px !important;
+  padding: 16px 20px !important;
+  margin-bottom: 24px !important;
+  box-shadow: 0 4px 18px rgba(15,20,30,.04) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+html.sc-wall-on body[data-ds-dark-theme] [data-plugin-panel] [data-plugin-group]{
+  background: color-mix(in srgb, #1c202a 68%, transparent) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,.25) !important;
+}
+html.sc-wall-on [data-plugin-panel] [class*="card"]{
+  border-radius: 10px !important;
+  transition: background .15s ease !important;
+}
+html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
+  background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, rgba(99,116,150,.1)) 75%, transparent) !important;
+}
+/* 全局主面板顶部返回会话悬浮按钮与工具栏按钮 */
+.sc-panel-back-floating{
+  position: fixed;
+  top: 18px;
+  right: 28px;
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: sc-fade .18s ease;
+}
+[data-windows-titlebar] .sc-panel-back-floating{
+  top: 42px;
+  right: 140px;
+}
+.sc-panel-back-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--dsw-alias-label-primary, #1b2028);
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 84%, transparent);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2, rgba(120,130,150,.35)) 60%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: 0 4px 16px rgba(15,20,30,.12), inset 0 1px 0 rgba(255,255,255,.5);
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.sc-panel-back-btn:hover{
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 96%, transparent);
+  border-color: var(--dsw-alias-brand-primary, #4d6bfe);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(77,107,254,.2), inset 0 1px 0 rgba(255,255,255,.6);
+}
+.sc-panel-back-btn:active{
+  transform: translateY(0);
+}
+body[data-ds-dark-theme] .sc-panel-back-btn{
+  color: #f0f3f8;
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1b2028) 84%, transparent);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+}
+body[data-ds-dark-theme] .sc-panel-back-btn:hover{
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1b2028) 96%, transparent);
+  border-color: #6366f1;
+  box-shadow: 0 6px 20px rgba(99,102,241,.3), inset 0 1px 0 rgba(255,255,255,.12);
+}
+.sc-panel-back-key{
+  display: inline-block;
+  font-size: 10.5px;
+  line-height: 14px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-3, rgba(120,130,150,.18)) 75%, transparent);
+  color: var(--dsw-alias-label-tertiary, #6b7280);
+  border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l1, rgba(120,130,150,.2)) 50%, transparent);
 }
 /* 悬浮液态玻璃顶栏（Floating Liquid Glass Capsule Header） */
 html.sc-wall-on [data-slot="conversation.session.header"]{
@@ -2545,6 +2650,10 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 					}
 				}
 			} catch (e) {}
+			// 处于非会话全局面板（如插件市场）时，视为活动界面，不进入 Zen 闲置态
+			if (document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))')) {
+				return true;
+			}
 			// 仅检测真正的模态弹窗或可见遮罩层，杜绝 Radix Tooltip、popper 占位、ContextMeter token 弹窗或隐藏容器误判
 			const overlays = document.querySelectorAll(
 				'.sc-overlay, .sc-dialog, .sc-dialog-mask, ' +
@@ -2569,6 +2678,10 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 					}
 				}
 			} catch (e) {}
+			// 处于非会话全局面板（如插件市场）时，保护侧栏不自动收起
+			if (document.querySelector('[data-plugin-panel], [data-slot="main"]:not(:has([data-slot*="conversation"]))')) {
+				return true;
+			}
 			const sidebar = document.querySelector('[data-slot="sidebar"]');
 			if (!sidebar) return false;
 			// 1. 侧栏内部有正在操作的弹出菜单或对话框
@@ -5297,6 +5410,23 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 		function ScDialogsHost() {
 			react.useSyncExternalStore(dialogBus.subscribe, dialogBus.getSnapshot, dialogBus.getSnapshot);
 			const st = dialogBus.state;
+			const activePanelId = react.useSyncExternalStore(
+				(onStoreChange) => {
+					try {
+						return ctxLayout?.panelInfo?.subscribe?.(onStoreChange) ?? (() => {});
+					} catch {
+						return () => {};
+					}
+				},
+				() => {
+					try {
+						return ctxLayout?.panelInfo?.getSnapshot?.()?.activePanelId ?? null;
+					} catch {
+						return null;
+					}
+				},
+				() => null,
+			);
 			// 有弹窗/面板打开时给 <html> 挂 sc-veil-open：冻结壁纸的动态层（网格 canvas
 			// 在 JS 侧跳过绘制，CSS 动画在样式表里暂停）。否则背景每帧都变，面板与遮罩的
 			// backdrop-filter 就要每帧重算 —— 滑动壁纸设置面板、点重启弹确认框都会掉帧。
@@ -5304,13 +5434,53 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 			react.useEffect(() => {
 				try {
 					const open = Boolean(st.confirm || st.picker || st.repair || st.tags
-						|| st.wallpaper || st.preview || st.welcome);
+						|| st.wallpaper || st.preview || st.welcome || activePanelId);
 					document.documentElement.classList.toggle("sc-veil-open", open);
 				} catch { /* ignore */ }
-			}, [st]);
+			}, [st, activePanelId]);
 			const L = makeT(dialogBus.t);
 			const tags = dialogBus.getTags?.() ?? [];
 			const refresh = dialogBus.onChanged;
+			react.useEffect(() => {
+				if (!activePanelId) return;
+				const onKey = (e) => {
+					if (e.key === "Escape") {
+						const hasDialog = Boolean(st.confirm || st.picker || st.repair || st.tags || st.wallpaper);
+						if (!hasDialog) {
+							e.preventDefault();
+							try { ctxLayout?.selectPanel?.(null); } catch {}
+						}
+					}
+				};
+				window.addEventListener("keydown", onKey, true);
+				return () => window.removeEventListener("keydown", onKey, true);
+			}, [activePanelId, st]);
+			react.useEffect(() => {
+				if (!activePanelId) return;
+				const injectToolbar = () => {
+					const toolbar = document.querySelector('[data-plugin-panel] [class*="toolbar"]');
+					if (!toolbar || toolbar.querySelector(".sc-panel-tb-back")) return;
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "sc-panel-back-btn sc-panel-tb-back";
+					btn.title = (L("backToConversation") || "返回会话") + " (Esc)";
+					btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>${L("backToConversation") || "返回会话"}</span><span class="sc-panel-back-key">Esc</span>`;
+					btn.onclick = () => { try { ctxLayout?.selectPanel?.(null); } catch {} };
+					toolbar.prepend(btn);
+				};
+				const tId = setTimeout(injectToolbar, 60);
+				let observer = null;
+				try {
+					observer = new MutationObserver(injectToolbar);
+					observer.observe(document.body, { childList: true, subtree: true });
+				} catch {}
+				return () => {
+					clearTimeout(tId);
+					if (observer) observer.disconnect();
+					const existing = document.querySelector(".sc-panel-tb-back");
+					if (existing) existing.remove();
+				};
+			}, [activePanelId, L]);
 			react.useEffect(() => {
 				if (!st.toast) return;
 				const timer = setTimeout(() => dialogBus.set({ toast: null }), 2200);
@@ -5324,6 +5494,30 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 				return () => clearTimeout(timer);
 			}, [st.welcome]);
 			const kids = [];
+			if (activePanelId) {
+				kids.push(h("div", { key: "panel-back", className: "sc-panel-back-floating" },
+					h("button", {
+						type: "button",
+						className: "sc-panel-back-btn",
+						title: (L("backToConversation") || "返回会话") + " (Esc)",
+						"aria-label": (L("backToConversation") || "返回会话"),
+						onClick: () => {
+							try { ctxLayout?.selectPanel?.(null); } catch (e) { console.debug(e); }
+						},
+					},
+						h("svg", {
+							width: 14, height: 14, viewBox: "0 0 16 16", fill: "none",
+							stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round",
+							style: { display: "inline-block", verticalAlign: "middle" },
+						},
+							h("line", { x1: "13", y1: "8", x2: "3", y2: "8" }),
+							h("polyline", { points: "8 3 3 8 8 13" }),
+						),
+						h("span", null, L("backToConversation") || "返回会话"),
+						h("span", { className: "sc-panel-back-key", "aria-hidden": "true" }, "Esc"),
+					),
+				));
+			}
 			if (st.tags) {
 				kids.push(h(TagManager, {
 					key: "tags", t: L, tags,
@@ -5900,13 +6094,20 @@ html[data-dsh-omode="verbose"] [data-chat-flow] > [data-chat-flow-kind="assistan
 				? (() => { try { return label(); } catch { return undefined; } })()
 				: label;
 			const text = typeof resolved === "string" && resolved.length > 0 ? resolved : L("pluginsPanel");
+			const tooltip = active ? `${L("backToConversation")} (${text})` : text;
 			return h("button", {
 				type: "button",
 				className: "sc-panel-btn" + (active ? " sc-panel-active" : ""),
-				title: text,
-				"aria-label": text,
+				title: tooltip,
+				"aria-label": tooltip,
 				"aria-current": active ? "page" : undefined,
-				onClick: () => { try { select(id); } catch (e) { console.debug("[dsh-session-center] selectPanel failed:", e); } },
+				onClick: () => {
+					try {
+						select(active ? null : id);
+					} catch (e) {
+						console.debug("[dsh-session-center] selectPanel failed:", e);
+					}
+				},
 			},
 				h("span", { className: "sc-panel-glyph", "aria-hidden": "true" }, render ? render({ size: 16, active }) : null),
 				h("span", { className: "sc-panel-label" }, text),

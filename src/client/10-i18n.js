@@ -110,6 +110,7 @@
 			wallpaperDesc: "开启沉浸式毛玻璃背景：自定义图片、遮罩、模糊、缩放与毛玻璃强度。",
 			open: "打开",
 			sessionLog: "Session log",
+			backToConversation: "返回会话",
 		};
 		const en = {
 			sessions: "Sessions",
@@ -222,4 +223,5 @@
 			wallpaperDesc: "Enable immersive frosted-glass background: custom image, mask, blur, zoom and glass strength.",
 			open: "Open",
 			sessionLog: "Session log",
+			backToConversation: "Back to Chat",
 		};

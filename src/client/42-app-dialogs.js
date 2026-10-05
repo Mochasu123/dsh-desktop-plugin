@@ -997,6 +997,23 @@
 		function ScDialogsHost() {
 			react.useSyncExternalStore(dialogBus.subscribe, dialogBus.getSnapshot, dialogBus.getSnapshot);
 			const st = dialogBus.state;
+			const activePanelId = react.useSyncExternalStore(
+				(onStoreChange) => {
+					try {
+						return ctxLayout?.panelInfo?.subscribe?.(onStoreChange) ?? (() => {});
+					} catch {
+						return () => {};
+					}
+				},
+				() => {
+					try {
+						return ctxLayout?.panelInfo?.getSnapshot?.()?.activePanelId ?? null;
+					} catch {
+						return null;
+					}
+				},
+				() => null,
+			);
 			// 有弹窗/面板打开时给 <html> 挂 sc-veil-open：冻结壁纸的动态层（网格 canvas
 			// 在 JS 侧跳过绘制，CSS 动画在样式表里暂停）。否则背景每帧都变，面板与遮罩的
 			// backdrop-filter 就要每帧重算 —— 滑动壁纸设置面板、点重启弹确认框都会掉帧。
@@ -1004,13 +1021,53 @@
 			react.useEffect(() => {
 				try {
 					const open = Boolean(st.confirm || st.picker || st.repair || st.tags
-						|| st.wallpaper || st.preview || st.welcome);
+						|| st.wallpaper || st.preview || st.welcome || activePanelId);
 					document.documentElement.classList.toggle("sc-veil-open", open);
 				} catch { /* ignore */ }
-			}, [st]);
+			}, [st, activePanelId]);
 			const L = makeT(dialogBus.t);
 			const tags = dialogBus.getTags?.() ?? [];
 			const refresh = dialogBus.onChanged;
+			react.useEffect(() => {
+				if (!activePanelId) return;
+				const onKey = (e) => {
+					if (e.key === "Escape") {
+						const hasDialog = Boolean(st.confirm || st.picker || st.repair || st.tags || st.wallpaper);
+						if (!hasDialog) {
+							e.preventDefault();
+							try { ctxLayout?.selectPanel?.(null); } catch {}
+						}
+					}
+				};
+				window.addEventListener("keydown", onKey, true);
+				return () => window.removeEventListener("keydown", onKey, true);
+			}, [activePanelId, st]);
+			react.useEffect(() => {
+				if (!activePanelId) return;
+				const injectToolbar = () => {
+					const toolbar = document.querySelector('[data-plugin-panel] [class*="toolbar"]');
+					if (!toolbar || toolbar.querySelector(".sc-panel-tb-back")) return;
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "sc-panel-back-btn sc-panel-tb-back";
+					btn.title = (L("backToConversation") || "返回会话") + " (Esc)";
+					btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><line x1="13" y1="8" x2="3" y2="8"></line><polyline points="8 3 3 8 8 13"></polyline></svg><span>${L("backToConversation") || "返回会话"}</span><span class="sc-panel-back-key">Esc</span>`;
+					btn.onclick = () => { try { ctxLayout?.selectPanel?.(null); } catch {} };
+					toolbar.prepend(btn);
+				};
+				const tId = setTimeout(injectToolbar, 60);
+				let observer = null;
+				try {
+					observer = new MutationObserver(injectToolbar);
+					observer.observe(document.body, { childList: true, subtree: true });
+				} catch {}
+				return () => {
+					clearTimeout(tId);
+					if (observer) observer.disconnect();
+					const existing = document.querySelector(".sc-panel-tb-back");
+					if (existing) existing.remove();
+				};
+			}, [activePanelId, L]);
 			react.useEffect(() => {
 				if (!st.toast) return;
 				const timer = setTimeout(() => dialogBus.set({ toast: null }), 2200);
@@ -1024,6 +1081,30 @@
 				return () => clearTimeout(timer);
 			}, [st.welcome]);
 			const kids = [];
+			if (activePanelId) {
+				kids.push(h("div", { key: "panel-back", className: "sc-panel-back-floating" },
+					h("button", {
+						type: "button",
+						className: "sc-panel-back-btn",
+						title: (L("backToConversation") || "返回会话") + " (Esc)",
+						"aria-label": (L("backToConversation") || "返回会话"),
+						onClick: () => {
+							try { ctxLayout?.selectPanel?.(null); } catch (e) { console.debug(e); }
+						},
+					},
+						h("svg", {
+							width: 14, height: 14, viewBox: "0 0 16 16", fill: "none",
+							stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round",
+							style: { display: "inline-block", verticalAlign: "middle" },
+						},
+							h("line", { x1: "13", y1: "8", x2: "3", y2: "8" }),
+							h("polyline", { points: "8 3 3 8 8 13" }),
+						),
+						h("span", null, L("backToConversation") || "返回会话"),
+						h("span", { className: "sc-panel-back-key", "aria-hidden": "true" }, "Esc"),
+					),
+				));
+			}
 			if (st.tags) {
 				kids.push(h(TagManager, {
 					key: "tags", t: L, tags,

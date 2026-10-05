@@ -130,9 +130,9 @@
 		// edit/remove/steer —— 要重排就得碰私有 Agent.inbox。故删除该按钮：
 		// 不保留一个永远报错的入口，也不为它去依赖私有 API。
 		function QueueStrip({ useSession, sessionId, updateQueue, notify, t }) {
-			const inbox = useSession((s) => s.queue);
-			const queue = react.useMemo(() => inbox.filter((row) => row.placement === "queued"), [inbox]);
-			const running = useSession((s) => s.running);
+			const inbox = typeof useSession === "function" ? useSession((s) => s?.queue) : null;
+			const queue = react.useMemo(() => (Array.isArray(inbox) ? inbox.filter((row) => row && row.placement === "queued") : []), [inbox]);
+			const running = typeof useSession === "function" ? useSession((s) => s?.running) : false;
 			const [busy, setBusy] = react.useState(null);
 			const [collapsed, setCollapsed] = react.useState(true);
 			const [editing, setEditing] = react.useState(null);

@@ -133,8 +133,7 @@
 			//   · 高亮读注入的 `usePanelInfo`（`{activePanelId}`，由 layout 的
 			//     `slots.provideRoot({hooks:{panelInfo}})` 提供，官方侧栏用的是同一个）。
 			//
-			// 目前**只放插件市场**（用户选择：不要定时任务）。放开其它面板只需往
-			// PANEL_ALLOW 里加 id（定时任务是 "schedules"，插件市场是 "plugins"）。
+			// 目前只放插件市场（用户选择：不要定时任务）。
 			const PANEL_ALLOW = new Set(["plugins"]);
 
 			/**

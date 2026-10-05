@@ -494,29 +494,19 @@ html.sc-wall-on [data-slot="main"] > div{background:transparent !important;}
 html.sc-wall-on [data-slot="main.conversation"]{background:transparent !important;}
 html.sc-wall-on [data-slot="main.conversation"] > div{background:transparent !important;}
 html.sc-wall-on [data-slot="conversation.session"]{background:transparent !important;}
-/* 非会话主列内容（插件市场 / 定时任务等全局面板）的**可读性底座**。
-   背景：上面把 centerCol 与主列刷成全透明，会话列自己有玻璃卡（见下方
-   [data-chat-flow] 的 --sc-content-glass），但全局面板是别的插件渲染的、
-   没有这一层。它们的文字用 --dsw-alias-label-primary，而壁纸浅色模式把这个
-   令牌重绘成近黑（#1b2028）——于是"深色壁纸 + 近黑文字"= 看不清。
-   实现取"纯叠加"：给面板根铺一层 ::before 背景，**不改面板自己的
-   background/color**，因此最坏情况也只是多一层底、不可能把内容藏起来。
-   维持"大容器不用 backdrop-filter"的既有铁律（滚轮/打字流畅的关键）。
-
-   ⚠️ 作用域必须**只**命中插件面板那一个元素（2026-09-28 用户报"遮罩加错位置了"）：
-   DOM 是 frame > centerCol > [renderSlot("main") 的 Outlet] > 面板内容，
-   那个 Outlet 自己就带 data-slot="main"。第一版写成 centerCol 的直接子元素选择器，
-   会把**整个中间列**（含会话视图）一起盖住 → 壁纸被糊白、左右关系错乱。
-   现在只认 [data-slot="main"]:not(:has([data-slot*="conversation"]))：
-     · :has() 排除含会话子树的那个（会话自己已有玻璃卡，不需要也不能再叠）；
-     · 不再触碰 centerCol 的直接子元素，也就不会波及未知的其它内容。 */
+/* 非会话主列内容（插件市场 / 定时任务等全局面板）的可读性底座。
+   作用域只认 [data-slot="main"]:not(:has([data-slot*="conversation"]))，排除会话。 */
 html.sc-wall-on [data-slot="main"]:not(:has([data-slot*="conversation"])){
-  position: relative;
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
 }
 html.sc-wall-on [data-slot="main"]:not(:has([data-slot*="conversation"]))::before{
   content: "";
   position: absolute;
-  inset: 12px clamp(14px, 3vw, 36px) 16px;
+  inset: 12px clamp(14px, 2.5vw, 32px) 16px;
   max-width: 1040px;
   left: 0;
   right: 0;
@@ -524,37 +514,40 @@ html.sc-wall-on [data-slot="main"]:not(:has([data-slot*="conversation"]))::befor
   z-index: 0;
   pointer-events: none;
   border-radius: var(--sc-radius-lg, 24px);
-  background: color-mix(in srgb, #fafbfd var(--sc-content-glass, 88%), transparent);
+  background: color-mix(in srgb, #fafbfd var(--sc-content-glass, 70%), transparent);
   -webkit-backdrop-filter: blur(var(--sc-card-blur, 28px)) saturate(180%) contrast(102%);
   backdrop-filter: blur(var(--sc-card-blur, 28px)) saturate(180%) contrast(102%);
-  border: 1px solid color-mix(in srgb, rgba(255,255,255,.8) 70%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, rgba(255,255,255,.5) 50%, transparent), 0 20px 60px rgba(15,20,30,.18), inset 0 1px 0 rgba(255,255,255,.6);
+  border: 1px solid color-mix(in srgb, rgba(255,255,255,.8) 75%, transparent);
+  box-shadow: 0 10px 36px rgba(15,20,30,.1), inset 0 1px 0 rgba(255,255,255,.6);
 }
 html.sc-wall-on body[data-ds-dark-theme] [data-slot="main"]:not(:has([data-slot*="conversation"]))::before{
-  background: color-mix(in srgb, #161820 var(--sc-content-glass, 88%), transparent);
+  background: color-mix(in srgb, #161820 var(--sc-content-glass, 75%), transparent);
   border: 1px solid rgba(255,255,255,.14);
-  box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1);
+  box-shadow: 0 10px 36px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1);
 }
 /* 插件管理面板（data-plugin-panel）卡片美化与深度融入壁纸 */
 html.sc-wall-on [data-plugin-panel]{
   position: relative !important;
   z-index: 1 !important;
   background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
 }
 html.sc-wall-on [data-plugin-panel] [data-plugin-group]{
-  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 65%, transparent) !important;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l1, rgba(120,130,150,.2)) 50%, transparent) !important;
+  background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 48%, transparent) !important;
+  border: 1px solid color-mix(in srgb, rgba(255,255,255,.8) 50%, transparent) !important;
   border-radius: 18px !important;
   padding: 16px 20px !important;
   margin-bottom: 24px !important;
-  box-shadow: 0 4px 18px rgba(15,20,30,.04) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 16px rgba(15,20,30,.03) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 html.sc-wall-on body[data-ds-dark-theme] [data-plugin-panel] [data-plugin-group]{
-  background: color-mix(in srgb, #1c202a 68%, transparent) !important;
+  background: color-mix(in srgb, #1c202a 58%, transparent) !important;
   border: 1px solid rgba(255,255,255,.08) !important;
-  box-shadow: 0 4px 18px rgba(0,0,0,.25) !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25) !important;
 }
 html.sc-wall-on [data-plugin-panel] [class*="card"]{
   border-radius: 10px !important;
@@ -563,29 +556,15 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]{
 html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, rgba(99,116,150,.1)) 75%, transparent) !important;
 }
-/* 全局主面板顶部返回会话悬浮按钮与工具栏按钮 */
-.sc-panel-back-floating{
-  position: fixed;
-  top: 18px;
-  right: 28px;
-  z-index: 1060;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  animation: sc-fade .18s ease;
-}
-[data-windows-titlebar] .sc-panel-back-floating{
-  top: 42px;
-  right: 140px;
-}
+/* 全局主面板顶部工具栏返回按钮 */
 .sc-panel-back-btn{
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  height: 32px;
-  padding: 0 13px;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   line-height: 1;
   color: var(--dsw-alias-label-primary, #1b2028);
@@ -593,7 +572,7 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2, rgba(120,130,150,.35)) 60%, transparent);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
   backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: 0 4px 16px rgba(15,20,30,.12), inset 0 1px 0 rgba(255,255,255,.5);
+  box-shadow: 0 2px 10px rgba(15,20,30,.08), inset 0 1px 0 rgba(255,255,255,.5);
   cursor: pointer;
   user-select: none;
   transition: transform .12s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
@@ -602,7 +581,7 @@ html.sc-wall-on [data-plugin-panel] [class*="card"]:hover{
   background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #ffffff) 96%, transparent);
   border-color: var(--dsw-alias-brand-primary, #4d6bfe);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(77,107,254,.2), inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow: 0 4px 14px rgba(77,107,254,.2), inset 0 1px 0 rgba(255,255,255,.6);
 }
 .sc-panel-back-btn:active{
   transform: translateY(0);
@@ -611,18 +590,18 @@ body[data-ds-dark-theme] .sc-panel-back-btn{
   color: #f0f3f8;
   background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1b2028) 84%, transparent);
   border-color: rgba(255,255,255,.14);
-  box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: 0 2px 10px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
 }
 body[data-ds-dark-theme] .sc-panel-back-btn:hover{
   background: color-mix(in srgb, var(--dsw-alias-bg-layer-2, #1b2028) 96%, transparent);
   border-color: #6366f1;
-  box-shadow: 0 6px 20px rgba(99,102,241,.3), inset 0 1px 0 rgba(255,255,255,.12);
+  box-shadow: 0 4px 14px rgba(99,102,241,.3), inset 0 1px 0 rgba(255,255,255,.12);
 }
 .sc-panel-back-key{
   display: inline-block;
-  font-size: 10.5px;
-  line-height: 14px;
-  padding: 1px 5px;
+  font-size: 10px;
+  line-height: 13px;
+  padding: 1px 4px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--dsw-alias-bg-layer-3, rgba(120,130,150,.18)) 75%, transparent);
   color: var(--dsw-alias-label-tertiary, #6b7280);
